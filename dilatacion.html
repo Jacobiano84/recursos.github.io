@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gráfica de dilatación</title>
+
+  <!-- JSXGraph -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: white;
+      font-family: sans-serif;
+    }
+    #jxgbox {
+      width: 100%;
+      height: 420px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="jxgbox" class="jxgbox"></div>
+
+<script>
+(function () {
+  const p = new URLSearchParams(window.location.search);
+
+  const a = parseFloat(p.get('a'));
+  const b = parseFloat(p.get('b'));
+  const c = parseFloat(p.get('c'));
+  const d = parseFloat(p.get('d'));
+  const e = parseFloat(p.get('e'));
+  const f = parseFloat(p.get('f'));
+
+  const y = [a,b,c,d,e,f];
+
+  if (y.some(v => isNaN(v))) {
+    console.warn("Parámetros faltantes");
+  }
+
+  let minY = Math.min(...y);
+  let maxY = Math.max(...y);
+
+  if (maxY === minY) { minY -= 1; maxY += 1; }
+
+  const pad = 0.1 * (maxY - minY);
+  minY -= pad;
+  maxY += pad;
+
+  const board = JXG.JSXGraph.initBoard('jxgbox', {
+    axis: true,
+    boundingbox: [-0.5, maxY, 5.5, minY],
+    showNavigation: false,
+    showCopyright: false
+  });
+
+  board.create('polygonalchain',
+    [[0,a],[1,b],[2,c],[3,d],[4,e],[5,f]], {
+    borders: { strokeWidth: 2 },
+    vertices: { size: 3, fixed: true }
+  });
+})();
+</script>
+
+</body>
+</html>
