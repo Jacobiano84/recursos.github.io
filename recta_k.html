@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recta y=kx sobre puntos</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+  <style>
+    body { margin:0; font-family:sans-serif; background:#fff; }
+    #box { width: 700px; height: 480px; }
+    .wrap { display:flex; justify-content:center; }
+    .info { text-align:center; margin:6px 0 0; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap"><div id="box" class="jxgbox"></div></div>
+  <div id="info" class="info"></div>
+
+<script>
+(function () {
+  const p = new URLSearchParams(location.search);
+
+  // k puede venir como "2.5" o "2,5"
+  const kRaw = p.get('k');
+  const hasK = (kRaw !== null && kRaw !== "");
+  const k = hasK ? parseFloat(String(kRaw).replace(',', '.')) : NaN;
+
+  // ======= PUNTOS (edita tu lista aquí) =======
+  const puntos = [
+    [0, 2.8],
+    [1, 8.0],
+    [2, 13.3],
+    [3, 27.1],
+    [4, 40.8],
+    [5, 61.6]
+  ];
+
+  // Rango automático
+  const xs = puntos.map(pt => pt[0]);
+  const ys = puntos.map(pt => pt[1]);
+
+  let minX = Math.min(...xs) - 0.5, maxX = Math.max(...xs) + 0.5;
+  let minY = Math.min(...ys),      maxY = Math.max(...ys);
+
+  if (hasK && Number.isFinite(k)) {
+    minY = Math.min(minY, k*minX, k*maxX);
+    maxY = Math.max(maxY, k*minX, k*maxX);
+  }
+  if (maxY === minY) { minY -= 1; maxY += 1; }
+  const padY = 0.12*(maxY - minY); minY -= padY; maxY += padY;
+
+  const board = JXG.JSXGraph.initBoard('box', {
+    axis: true,
+    boundingbox: [minX, maxY, maxX, minY],
+    showNavigation: false,
+    showCopyright: false
+  });
+
+  // Puntos (AZUL)
+  puntos.forEach(([x,y]) => {
+    board.create('point', [x,y], {
+      size: 4,
+      fixed: true,
+      withLabel: false,
+      strokeColor: '#1f77b4',
+      fillColor: '#1f77b4'
+    });
+  });
+
+  // Recta y = kx (ROJO) si k es válido
+  if (hasK && Number.isFinite(k)) {
+    board.create('functiongraph', [
+      function(x){ return k*x; }
+    ], {
+      strokeColor: '#d62728',
+      strokeWidth: 3
+    });
+
+    document.getElementById('info').innerHTML = `<b>Recta:</b> y = ${k}·x`;
+  } else {
+    document.getElementById('info').innerHTML = `<b>Puntos experimentales</b>`;
+  }
+})();
+</script>
+</body>
+</html>
