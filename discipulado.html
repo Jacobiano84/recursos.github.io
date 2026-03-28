@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Discipulado</title>
+    <!-- Fuentes y Librerías -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #c8a2c8;
+            --accent: #ffd700;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            --text: #333;
+            --success: #27ae60;
+        }
+
+        * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header Visual */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+        h1 { color: var(--primary); font-weight: 700; letter-spacing: 2px; margin: 0; }
+        .subtitle { font-size: 0.9em; color: #666; text-transform: uppercase; }
+
+        /* Pantallas */
+        .screen { display: none; animation: fadeIn 0.5s ease-out; }
+        .active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Registro */
+        .form-group { margin-bottom: 20px; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+
+        /* Preguntas */
+        .category-tag {
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .question-text { font-size: 1.2em; font-weight: 600; margin-bottom: 20px; }
+        .options-grid { display: grid; gap: 10px; }
+        .option-card {
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        .option-card:hover { background: #f0f7f9; border-color: var(--primary); }
+        .option-card.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Botones */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: 0.3s;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-excel { background: var(--success); }
+
+        /* Progreso */
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            border-radius: 4px;
+            transition: 0.4s;
+        }
+
+        /* Resultados */
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 8px solid var(--primary);
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>DISCIPULADO</h1>
+        <div class="subtitle">Examen Final de Crecimiento</div>
+    </div>
+
+    <!-- PANTALLA DE REGISTRO -->
+    <div id="screen-login" class="screen active">
+        <h3>Registro de Estudiante</h3>
+        <div class="form-group">
+            <label>Nombre Completo:</label>
+            <input type="text" id="user-name" placeholder="Ej. Juan Pérez">
+        </div>
+        <div class="form-group">
+            <label>ID o Grupo:</label>
+            <input type="text" id="user-id" placeholder="Ej. Grupo Monte Sion">
+        </div>
+        <button class="btn" onclick="startExam()">Empezar Evaluación</button>
+    </div>
+
+    <!-- PANTALLA DE EXAMEN -->
+    <div id="screen-quiz" class="screen">
+        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        <div id="question-container">
+            <!-- Aquí se cargan las preguntas -->
+        </div>
+        <button class="btn" id="next-btn" onclick="nextQuestion()">Siguiente</button>
+    </div>
+
+    <!-- PANTALLA DE RESULTADOS -->
+    <div id="screen-result" class="screen">
+        <h2 style="text-align: center;">Evaluación Finalizada</h2>
+        <div class="score-circle" id="score-display">
+            0%
+            <span style="font-size: 0.3em; font-weight: 300;">CALIFICACIÓN</span>
+        </div>
+        <div id="result-text" style="text-align: center; margin-bottom: 20px;"></div>
+        <button class="btn btn-excel" onclick="exportToExcel()">Descargar Reporte Excel</button>
+        <button class="btn" onclick="location.reload()">Reiniciar</button>
+    </div>
+</div>
+
+<script>
+    // BANCO DE PREGUNTAS (Resumen basado en el PDF)
+    const questionBank = [
+        {
+            cat: "OPCIÓN MÚLTIPLE",
+            q: "¿Qué significa el discipulado según 2 Timoteo 2:2?",
+            options: ["Escuchar sin compartir", "Enseñar solo a líderes", "Enseñar a otros para que también enseñen", "Aprender solo para uno mismo"],
+            correct: 2
+        },
+        {
+            cat: "VERDADERO O FALSO",
+            q: "En la iglesia del tiempo de los apóstoles se multiplicaban las multitudes, pero no los discípulos.",
+            options: ["Verdadero", "Falsos"],
+            correct: 1
+        },
+        {
+            cat: "COMPLETAR",
+            q: "Jesús ordenó: 'Id y haced discípulos a todas las __________'.",
+            options: ["Naciones", "Iglesias", "Casas", "Personas"],
+            correct: 0
+        },
+        {
+            cat: "OPCIÓN MÚLTIPLE",
+            q: "¿Qué significa la palabra 'discípulo'?",
+            options: ["Maestro", "Pastor", "Aprendiz o pupilo", "Gobernante"],
+            correct: 2
+        },
+        {
+            cat: "CONCEPTO",
+            q: "El crecimiento que produce el discipulado es:",
+            options: ["Lineal", "Exponencial", "Lento", "Temporal"],
+            correct: 1
+        },
+        {
+            cat: "CARÁCTER",
+            q: "El carácter cristiano se forma únicamente por el esfuerzo humano.",
+            options: ["Verdadero", "Falso"],
+            correct: 1
+        }
+    ];
+
+    let currentQuestions = [];
+    let currentIdx = 0;
+    let score = 0;
+    let userData = {};
+    let selectedAnswer = null;
+
+    function startExam() {
+        const name = document.getElementById('user-name').value;
+        const id = document.getElementById('user-id').value;
+
+        if(!name || !id) return alert("Por favor complete sus datos");
+
+        userData = { name, id, date: new Date().toLocaleString() };
+        
+        // Aleatorizar preguntas
+        currentQuestions = [...questionBank].sort(() => Math.random() - 0.5);
+        
+        document.getElementById('screen-login').classList.remove('active');
+        document.getElementById('screen-quiz').classList.add('active');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        selectedAnswer = null;
+        const qData = currentQuestions[currentIdx];
+        const container = document.getElementById('question-container');
+        
+        const progress = ((currentIdx) / currentQuestions.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+
+        container.innerHTML = `
+            <div class="category-tag">${qData.cat}</div>
+            <div class="question-text">${qData.q}</div>
+            <div class="options-grid">
+                ${qData.options.map((opt, i) => `
+                    <div class="option-card" onclick="selectOption(this, ${i})">
+                        ${opt}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function selectOption(el, idx) {
+        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedAnswer = idx;
+    }
+
+    function nextQuestion() {
+        if(selectedAnswer === null) return alert("Seleccione una respuesta");
+
+        if(selectedAnswer === currentQuestions[currentIdx].correct) {
+            score++;
+        }
+
+        currentIdx++;
+        if(currentIdx < currentQuestions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('screen-quiz').classList.remove('active');
+        document.getElementById('screen-result').classList.add('active');
+        
+        const finalPercent = Math.round((score / currentQuestions.length) * 100);
+        document.getElementById('score-display').innerHTML = `${finalPercent}% <span style="font-size: 0.3em; font-weight: 300;">CALIFICACIÓN</span>`;
+        
+        let msg = finalPercent >= 70 ? "¡Felicidades, aprobado!" : "Sigue estudiando, puedes mejorar.";
+        document.getElementById('result-text').innerText = `${userData.name}, tu puntaje fue ${score} de ${currentQuestions.length}. ${msg}`;
+        
+        userData.score = finalPercent + "%";
+        userData.rawScore = `${score}/${currentQuestions.length}`;
+    }
+
+    function exportToExcel() {
+        const reportData = [{
+            "Estudiante": userData.name,
+            "Grupo/ID": userData.id,
+            "Fecha": userData.date,
+            "Puntaje": userData.score,
+            "Correctas": userData.rawScore
+        }];
+
+        const ws = XLSX.utils.json_to_sheet(reportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        XLSX.writeFile(wb, `Resultado_Discipulado_${userData.name}.xlsx`);
+    }
+</script>
+
+</body>
+</html>
