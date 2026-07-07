@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ajuste de k</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraphcore.js"></script>
+
+  <style>
+    body { margin:0; font-family:sans-serif; background:#fff; }
+    .wrap { display:flex; justify-content:center; }
+    .jxgbox { width:760px; height:360px; margin:10px 0; }
+    .titulo { text-align:center; font-weight:bold; margin-top:10px; }
+    .sub { text-align:center; font-size:14px; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+
+<div class="titulo">Modelo original</div>
+<div class="sub">Puntos \((x,y)\) y curva \(y=3-3e^{-kx}\)</div>
+<div class="wrap"><div id="box1" class="jxgbox"></div></div>
+
+<div class="titulo">Modelo linealizado</div>
+<div class="sub">Puntos \((x,\ln(3-y))\) y recta \(z=\ln(3)-kx\)</div>
+<div class="wrap"><div id="box2" class="jxgbox"></div></div>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(window.location.search);
+
+  function leerNumero(nombre) {
+    const v = qs.get(nombre);
+    if (v === null || v === "") return NaN;
+    return parseFloat(String(v).replace(",", "."));
+  }
+
+  // --------- DATOS ----------
+  const xs = [
+    leerNumero("x1"), leerNumero("x2"), leerNumero("x3"),
+    leerNumero("x4"), leerNumero("x5"), leerNumero("x6")
+  ];
+
+  const ys = [
+    leerNumero("y1"), leerNumero("y2"), leerNumero("y3"),
+    leerNumero("y4"), leerNumero("y5"), leerNumero("y6")
+  ];
+
+  // k ingresado por el alumno
+  const k = leerNumero("k");
+  const hayK = Number.isFinite(k);
+
+  // z = ln(3-y)
+  const zs = ys.map(y => Math.log(3 - y));
+
+  // --------- BOARD 1: MODELO ORIGINAL ----------
+  let minX = Math.min(...xs), maxX = Math.max(...xs);
+  let minY = Math.min(...ys), maxY = Math.max(...ys);
+
+  if (hayK) {
+    const yA = 3 - 3*Math.exp(-k*minX);
+    const yB = 3 - 3*Math.exp(-k*maxX);
+    minY = Math.min(minY, yA, yB);
+    maxY = Math.max(maxY, yA, yB);
+  }
+
+  let padX = 0.08*(maxX-minX || 1);
+  let padY = 0.15*(maxY-minY || 1);
+
+  const b1 = JXG.JSXGraph.initBoard('box1', {
+    axis: true,
+    boundingbox: [minX-padX, maxY+padY, maxX+padX, minY-padY],
+    showNavigation: false,
+    showCopyright: false
+  });
+
+  // puntos originales
+  for (let i = 0; i < xs.length; i++) {
+    b1.create('point', [xs[i], ys[i]], {
+      size: 4,
+      fixed: true,
+      withLabel: false,
+      strokeColor: '#1f77b4',
+      fillColor: '#1f77b4'
+    });
+  }
+
+  // curva con k del alumno
+  if (hayK) {
+    b1.create('functiongraph', [
+      function(x){ return 3 - 3*Math.exp(-k*x); },
+      minX, maxX
+    ], {
+      strokeColor: '#d62728',
+      strokeWidth: 3
+    });
+
+    b1.create('text', [
+      minX, maxY + 0.05*(maxY-minY || 1),
+      "Curva del alumno: y = 3 - 3e^{-(" + k + ")x}"
+    ], { fixed:true });
+  }
+
+  // --------- BOARD 2: MODELO LINEALIZADO ----------
+  let minZ = Math.min(...zs), maxZ = Math.max(...zs);
+
+  if (hayK) {
+    const zA = Math.log(3) - k*minX;
+    const zB = Math.log(3) - k*maxX;
+    minZ = Math.min(minZ, zA, zB);
+    maxZ = Math.max(maxZ, zA, zB);
+  }
+
+  let padZ = 0.15*(maxZ-minZ || 1);
+
+  const b2 = JXG.JSXGraph.initBoard('box2', {
+    axis: true,
+    boundingbox: [minX-padX, maxZ+padZ, maxX+padX, minZ-padZ],
+    showNavigation: false,
+    showCopyright: false
+  });
+
+  // puntos transformados
+  for (let i = 0; i < xs.length; i++) {
+    b2.create('point', [xs[i], zs[i]], {
+      size: 4,
+      fixed: true,
+      withLabel: false,
+      strokeColor: '#1f77b4',
+      fillColor: '#1f77b4'
+    });
+  }
+
+  // recta con k del alumno
+  if (hayK) {
+    b2.create('functiongraph', [
+      function(x){ return Math.log(3) - k*x; },
+      minX, maxX
+    ], {
+      strokeColor: '#2ca02c',
+      strokeWidth: 3
+    });
+
+    b2.create('text', [
+      minX, maxZ + 0.05*(maxZ-minZ || 1),
+      "Recta del alumno: z = ln(3) - (" + k + ")x"
+    ], { fixed:true });
+  }
+})();
+</script>
+
+</body>
+</html>
